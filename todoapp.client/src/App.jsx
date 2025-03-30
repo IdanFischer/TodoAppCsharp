@@ -1,43 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+    setTodos,
+    openModalForAdd,
+    openModalForEdit,
+    closeModal
+} from './source/todoSlice.js';
 import './App.css';
 
 function App() {
     const todoURL = "https://localhost:7282/todos"; // Update as needed
-    const [todos, setTodos] = useState([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentTask, setCurrentTask] = useState(null);
-    //co
+    const dispatch = useDispatch();
+    const { todos, isModalOpen, currentTask } = useSelector((state) => state.todo);
 
     useEffect(() => {
         populateTodoTasks();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     async function populateTodoTasks() {
         const response = await fetch(todoURL, {
             method: "GET",
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
         });
         if (response.ok) {
             const data = await response.json();
-            setTodos(data);
+            dispatch(setTodos(data));
         }
     }
 
-    const openModalForAdd = () => {
-        setCurrentTask({ title: '', description: '', isComplete: false });
-        setIsModalOpen(true);
+    const handleOpenModalForAdd = () => {
+        dispatch(openModalForAdd());
     };
 
-    const openModalForEdit = (task) => {
-        setCurrentTask(task);
-        setIsModalOpen(true);
+    const handleOpenModalForEdit = (task) => {
+        dispatch(openModalForEdit(task));
     };
 
-    const closeModal = () => {
-        setCurrentTask(null);
-        setIsModalOpen(false);
+    const handleCloseModal = () => {
+        dispatch(closeModal());
     };
 
     const handleSubmit = async (task) => {
@@ -46,17 +47,17 @@ function App() {
             await fetch(todoURL, {
                 method: "PUT",
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(task)
+                body: JSON.stringify(task),
             });
         } else {
             // Create new task
             await fetch(todoURL, {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(task)
+                body: JSON.stringify(task),
             });
         }
-        closeModal();
+        handleCloseModal();
         populateTodoTasks();
     };
 
@@ -64,7 +65,7 @@ function App() {
         await fetch(todoURL, {
             method: "DELETE",
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(task)
+            body: JSON.stringify(task),
         });
         populateTodoTasks();
     };
@@ -73,7 +74,7 @@ function App() {
         <div className="container">
             <h1>Todo</h1>
             <p>The tasks you need to do</p>
-            <button className="btn" onClick={openModalForAdd}>Add Task</button>
+            <button className="btn" onClick={handleOpenModalForAdd}>Add Task</button>
             {todos.length === 0 ? (
                 <p>Loading tasks...</p>
             ) : (
@@ -93,7 +94,7 @@ function App() {
                                 <td>{task.description}</td>
                                 <td>{task.isComplete ? 'Yes' : 'No'}</td>
                                 <td>
-                                    <button className="btn-edit" onClick={() => openModalForEdit(task)}>Edit</button>
+                                    <button className="btn-edit" onClick={() => handleOpenModalForEdit(task)}>Edit</button>
                                     <button className="btn btn-danger" onClick={() => handleDelete(task)}>Delete</button>
                                 </td>
                             </tr>
@@ -104,7 +105,7 @@ function App() {
             {isModalOpen && (
                 <TodoModal
                     task={currentTask}
-                    onClose={closeModal}
+                    onClose={handleCloseModal}
                     onSubmit={handleSubmit}
                 />
             )}
@@ -113,10 +114,9 @@ function App() {
 }
 
 function TodoModal({ task, onClose, onSubmit }) {
-    // Make a local copy of the task for form editing
+    // Using both redux and useState to showcase them.
     const [formData, setFormData] = useState(task);
 
-    // Update formData when the passed task changes (for edit mode)
     useEffect(() => {
         setFormData(task);
     }, [task]);
@@ -125,7 +125,7 @@ function TodoModal({ task, onClose, onSubmit }) {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: type === 'checkbox' ? checked : value,
         }));
     };
 
@@ -158,9 +158,7 @@ function TodoModal({ task, onClose, onSubmit }) {
                             required
                         />
                     </div>
-                    <div
-                        className="form-group"
-                        id="checkbox-form-group">
+                    <div className="form-group" id="checkbox-form-group">
                         <label id="complete-label">
                             <p>Completed</p>
                             <input
@@ -169,14 +167,16 @@ function TodoModal({ task, onClose, onSubmit }) {
                                 type="checkbox"
                                 checked={formData.isComplete}
                                 onChange={handleChange}
-                            /> 
+                            />
                         </label>
                     </div>
                     <div className="modal-actions">
                         <button type="submit" className={formData.id ? 'btn-edit' : 'btn'}>
                             {formData.id ? 'Update' : 'Add'}
                         </button>
-                        <button type="button" className="btn btn-danger" onClick={onClose}>Cancel</button>
+                        <button type="button" className="btn btn-danger" onClick={onClose}>
+                            Cancel
+                        </button>
                     </div>
                 </form>
             </div>
