@@ -9,7 +9,7 @@ import {
 import './App.css';
 
 function App() {
-    const todoURL = "https://localhost:7282/todos"; // Update as needed
+    const todoURL = "http://localhost:7282/todos"; // Update as needed
     const dispatch = useDispatch();
     const { todos, isModalOpen, currentTask } = useSelector((state) => state.todo);
 
